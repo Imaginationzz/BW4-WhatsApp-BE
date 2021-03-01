@@ -1,5 +1,5 @@
 //MAIN IMPORTS
-const RoomModel = require("../services/rooms/model")
+const RoomModel = require("../services/rooms/model");
 
 //ADD USER TO ROOM
 const addMember = async ({ username, socketId, roomName }) => {
@@ -8,63 +8,63 @@ const addMember = async ({ username, socketId, roomName }) => {
     const isMemberJoined = await RoomModel.findOne({
       roomName,
       "membersList.username": username,
-    })
+    });
 
     if (isMemberJoined) {
       //IF ALREADY JOINED ROOM INSERT SOCKET ID
-      await RoomModel.findOneAndUpdate(
+      const user = await RoomModel.findOneAndUpdate(
         { roomName, "membersList.username": username },
         { "membersList.$.socketId": socketId }
-      )
+      );
     } else {
       //IF NOT JOINED - ADD NEW MEMBER
       const newMember = await RoomModel.findOneAndUpdate(
-        { roomName },
+        { roomName: roomName },
         { $addToSet: { membersList: { username, socketId } } }
-      )
+      );
     }
-    return { username, roomName }
+    return { username, roomName };
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 //GET MEMBERS LIST IN A ROOM
 const getMembersList = async (roomName) => {
   try {
-    const room = await RoomModel.findOne({ roomName })
-    return room.membersList
+    const room = await RoomModel.findOne({ roomName: roomName });
+    return room.membersList;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 //GET MEMBER BY SOCKET ID
 const getMember = async (roomName, socketId) => {
   try {
-    const room = await RoomModel.findOne({ roomName })
-    const member = room.membersList.find((user) => user.socketId === socketId)
-    return member
+    const room = await RoomModel.findOne({ roomName });
+    const member = room.membersList.find((user) => user.socketId === socketId);
+    return member;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 //REMOVE MEMBER FROM DB
 const removeMember = async (roomName, socketId) => {
   try {
-    const member = await getMember(roomName, socketId)
+    const member = await getMember(roomName, socketId);
 
     await RoomModel.findOneAndUpdate(
       { roomName },
       { $pull: { membersList: { socketId } } }
-    )
+    );
 
-    return member
+    return member;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 //EXPORT
-module.exports = { addMember, getMembersList, getMember, removeMember }
+module.exports = { addMember, getMembersList, getMember, removeMember };
