@@ -5,7 +5,7 @@ const express = require("express"),
   http = require("http")
 
 //SOCKET IMPORTS
-// const createSocket = require("./utilities/socket")
+const createSocket = require("./socket")
 
 //SEVICES IMPORTS
 const mainRoute = require("./services/index")
@@ -22,7 +22,7 @@ const {
 //MAIN
 const server = express(),
   httpServer = http.createServer(server)
-// createSocket(httpServer)
+createSocket(httpServer)
 const PORT = process.env.PORT || 5000,
   accessOrigin =
     process.env.NODE_ENV === "production"
