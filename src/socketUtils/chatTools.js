@@ -1,8 +1,14 @@
 const MessageModel = require("../services/messages/model")
+const RoomModel = require("../services/rooms/model")
 
-const saveMessage = async (messageContent) => {
+const saveMessage = async (messageContent, roomName) => {
   try {
     const newMessage = await new MessageModel(messageContent)
+    const updatedChat = await RoomModel.findOneAndUpdate(
+      { roomName: roomName },
+      { $addToSet: { messages: newMessage } }
+    )
+
     const savedMessage = await newMessage.save()
     return savedMessage
   } catch (error) {

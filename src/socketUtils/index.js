@@ -50,11 +50,11 @@ const chat = (socket, io) => {
     const messageContent = {
       text: message,
       sender: member.username,
-      roomName,
+      // roomName,
     }
 
     //SAVE MESSAGE IN DB
-    await saveMessage(messageContent)
+    await saveMessage(messageContent, roomName)
 
     //SEND MeSSAGE TO CHAT
     io.to(roomName).emit("message", messageContent)
