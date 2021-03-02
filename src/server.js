@@ -2,13 +2,17 @@ const express = require("express"),
   listEndpoint = require("express-list-endpoints"),
   cors = require("cors"),
   mongoose = require("mongoose"),
-  http = require("http")
+  http = require("http"),
+  passport = require("passport");
+
+//OAUTH IMPORTS
+const oAuth = require("./utilities/auth/oAuth");
 
 //SOCKET IMPORTS
-const createSocket = require("./socket")
+const createSocket = require("./socket");
 
 //SEVICES IMPORTS
-const mainRoute = require("./services/index")
+const mainRoute = require("./services/index");
 
 //ERRORS IMPORTS
 const {
@@ -17,12 +21,12 @@ const {
   forbidden,
   badRequest,
   genericError,
-} = require("./utilities/errors")
+} = require("./utilities/errors");
 
 //MAIN
 const server = express(),
-  httpServer = http.createServer(server)
-createSocket(httpServer)
+  httpServer = http.createServer(server);
+createSocket(httpServer);
 const PORT = process.env.PORT || 5000,
   accessOrigin =
     process.env.NODE_ENV === "production"
@@ -30,40 +34,41 @@ const PORT = process.env.PORT || 5000,
       : [process.env.FE_URL_DEV],
   corsOptions = {
     origin: function (origin, callback) {
-      if (accessOrigin.indexOf(origin) !== -1) {
-        callback(null, true)
+      if (accessOrigin.indexOf(origin) !== -1 || !origin) {
+        callback(null, true);
       } else {
         callback(
           new Error("CORS ISSUES : Invalid origin - Check access origins list")
-        )
+        );
       }
     },
-  }
+  };
 
 //MIDDLEWARE
-server.use(express.json())
-server.use(cors(corsOptions))
+server.use(express.json());
+server.use(cors(corsOptions));
+server.use(passport.initialize());
 
 //ROUTES
 server.get("/", async (req, res, next) => {
   try {
-    res.send("<h1>Welcome to Server</h1>")
+    res.send("<h1>Welcome to Server</h1>");
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-})
-server.use("/", mainRoute)
+});
+server.use("/", mainRoute);
 
 //ERRORS
-server.use(notFound)
-server.use(unAuthorized)
-server.use(forbidden)
-server.use(badRequest)
-server.use(genericError)
+server.use(notFound);
+server.use(unAuthorized);
+server.use(forbidden);
+server.use(badRequest);
+server.use(genericError);
 
 //CONSOLE LOGS
-console.log(listEndpoint(server))
+console.log(listEndpoint(server));
 
 //MONGODB CONNECTION
 mongoose
@@ -77,7 +82,7 @@ mongoose
     httpServer.listen(PORT, () => {
       process.env.NODE_ENV === "production"
         ? console.log(`Server running ONLINE on : ${PORT}`)
-        : console.log(`Server running LOCALLY on : http://localhost:${PORT}`)
+        : console.log(`Server running LOCALLY on : http://localhost:${PORT}`);
     })
   )
-  .catch((error) => console.log(error))
+  .catch((error) => console.log(error));

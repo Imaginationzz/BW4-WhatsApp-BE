@@ -1,31 +1,32 @@
 const userRoute = require("express").Router(),
   UserModel = require("./model"),
-  //   { auth, adminOnly } = require("../../utilities/auth"),
-  { authenticate } = require("../../utilities/auth/tokenTools")
+  { auth, socialAuthRedirect } = require("../../utilities/auth"),
+  { authenticate } = require("../../utilities/auth/tokenTools"),
+  passport = require("passport");
 
 //ENDPOINTS
 userRoute.route("/").post(async (req, res, next) => {
   try {
     const newUser = await UserModel(req.body),
-      { _id } = await newUser.save()
-    res.send(newUser)
+      { _id } = await newUser.save();
+    res.send(newUser);
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
 //GET TOKENS
 userRoute.route("/authorize").post(async (req, res, next) => {
   try {
-    const { username, password } = req.body
-    const user = await UserModel.findByCredentials(username, password)
-    const tokens = await authenticate(user)
-    res.send(tokens)
+    const { username, password } = req.body;
+    const user = await UserModel.findByCredentials(username, password);
+    const tokens = await authenticate(user);
+    res.send(tokens);
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-})
+});
 
 //GET
 // userRoute.route("/").get(auth, async (req, res, next) => {
@@ -40,11 +41,11 @@ userRoute.route("/authorize").post(async (req, res, next) => {
 //GET BY USER
 userRoute.route("/profile").get(async (req, res, next) => {
   try {
-    res.send(req.user)
+    res.send(req.user);
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
 //GET USER BY ADMIN
 // userRoute.route("/profile/:userId").get(async (req, res, next) => {
@@ -59,15 +60,15 @@ userRoute.route("/profile").get(async (req, res, next) => {
 //EDIT BY USER
 userRoute.route("/profile").put(async (req, res, next) => {
   try {
-    const updates = Object.keys(req.body)
-    updates.forEach((update) => (req.user[update] = req.body[update]))
-    await req.user.save()
-    res.send(req.user)
-    res.send(updates)
+    const updates = Object.keys(req.body);
+    updates.forEach((update) => (req.user[update] = req.body[update]));
+    await req.user.save();
+    res.send(req.user);
+    res.send(updates);
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
 // //EDIT BY ADMIN
 // userRoute
@@ -91,12 +92,12 @@ userRoute.route("/profile").put(async (req, res, next) => {
 //DELETE BY USER
 userRoute.route("/profile").delete(async (req, res, next) => {
   try {
-    await req.user.deleteOne()
-    res.send("User Deleted")
+    await req.user.deleteOne();
+    res.send("User Deleted");
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
 // //DELETE BY ADMIN
 // userRoute
@@ -137,16 +138,16 @@ userRoute.route("/logout").post(async (req, res, next) => {
   try {
     req.user.refresh_token = req.user.refresh_token.filter(
       (token) => token.token !== req.body.refresh_token
-    )
-    await req.user.save()
+    );
+    await req.user.save();
     res.send(
       `Logged Out - Refresh Token : ${req.body.refresh_token} has been removed`
-    )
+    );
   } catch (err) {
-    console.log(err)
-    next(err)
+    console.log(err);
+    next(err);
   }
-})
+});
 
 //LOGOUT ALL DEVICES
 // userRoute.route("/logoutAll").post(auth, async (req, res, next) => {
@@ -160,4 +161,30 @@ userRoute.route("/logout").post(async (req, res, next) => {
 //   }
 // });
 
-module.exports = userRoute
+//GOOGLE
+userRoute.get(
+  "/googleLogin",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+//GOOGLE REDIRECT
+userRoute.get(
+  "/googleRedirect",
+  passport.authenticate("google"),
+  socialAuthRedirect
+);
+
+//FACEBOOK LOGIN
+userRoute.get(
+  "/facebookLogin",
+  passport.authenticate("facebook", { scope: ["email", "public_profile"] })
+);
+
+//FACEBOOK REDIRECT
+userRoute.get(
+  "/facebookRedirect",
+  passport.authenticate("facebook"),
+  socialAuthRedirect
+);
+
+module.exports = userRoute;

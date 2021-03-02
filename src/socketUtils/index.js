@@ -46,7 +46,6 @@ const chat = (socket, io) => {
   return socket.on("chat", async ({ roomName, message }) => {
     //FIND USER
     const member = await getMember(roomName, socket.id);
-
     //MESSAGE
     const messageContent = {
       text: message,
