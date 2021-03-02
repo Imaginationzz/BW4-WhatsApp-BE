@@ -8,12 +8,12 @@ const {
 const { saveMessage } = require("./chatTools")
 
 //JOIN ROOM
-const joinRoom = (socket, io) => {
+const joinRoom = (socket, subscriberSocket, io) => {
   return socket.on("joinRoom", async (data) => {
     try {
       //ADD MEMBER
       const { username, roomName } = await addMember({
-        socketId: socket.id,
+        socketId: subscriberSocket,
         ...data,
       })
 
@@ -42,19 +42,19 @@ const joinRoom = (socket, io) => {
 }
 
 //CHATGROUP
-const chat = (socket, io) => {
+const chat = (socket, subscriberSocket, io) => {
   return socket.on("chat", async ({ roomName, message }) => {
     //FIND USER
-    const member = await getMember(roomName, socket.id)
+    const member = await getMember(roomName, subscriberSocket)
     //MESSAGE
     const messageContent = {
       text: message,
       sender: member.username,
-      roomName,
+      // roomName,
     }
 
     //SAVE MESSAGE IN DB
-    await saveMessage(messageContent)
+    await saveMessage(messageContent, roomName)
 
     //SEND MeSSAGE TO CHAT
     io.to(roomName).emit("message", messageContent)
@@ -62,10 +62,10 @@ const chat = (socket, io) => {
 }
 
 //LEAVE ROOM
-const leaveRoom = (socket, io) => {
+const leaveRoom = (socket, subscriberSocket, io) => {
   return socket.on("leaveRoom", async ({ roomName }) => {
     try {
-      const member = await removeMember(roomName, socket.id)
+      const member = await removeMember(roomName, subscriberSocket)
 
       //LEAVE ALERT
       const leaveAlert = {
@@ -88,47 +88,5 @@ const leaveRoom = (socket, io) => {
   })
 }
 
-const defaultJoin = (socket, io) => {
-  const defaultRoom = "WhatsApp_default"
-  return socket.on("defaultJoin", async (data) => {
-    try {
-      //ADD MEMBER
-      const { username } = await addMember({
-        socketId: socket.id,
-        ...data,
-        roomName: defaultRoom,
-      })
-
-      //console.log(username)
-      //SOCKET JOIN TO ROOM
-      socket.join(defaultRoom, async () => {
-        //ALERT MESSAGE WHEN JOIN THE ROOM
-        const joinAlert = {
-          sender: "Admin",
-          text: `${username} has joined the room (${defaultRoom})`,
-          createdAt: new Date(),
-        }
-console.log(defaultRoom)
-console.log(username)
-        //SEND THE ALERT TO THE ROOM
-        socket.broadcast.to(defaultRoom).emit("message", joinAlert)
-
-        //MEMBERS LIST
-        const membersList = await getMembersList(defaultRoom)
-        console.log(membersList)
-
-        //SEND MEMBERS LIST
-        io.to(defaultRoom).emit("membersList", {
-          roomName: defaultRoom,
-          list: membersList,
-        })
-      })
-      console.log(membersList)
-    } catch (error) {
-      console.log(error)
-    }
-  })
-}
-
 //EXPORTS
-module.exports = { joinRoom, chat, leaveRoom, defaultJoin }
+module.exports = { joinRoom, chat, leaveRoom }
