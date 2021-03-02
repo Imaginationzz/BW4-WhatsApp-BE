@@ -1,7 +1,7 @@
 const socketio = require("socket.io")
 
 // SOCKET UTILITIES
-const { joinRoom, chat, leaveRoom } = require("./socketUtils")
+const { joinRoom, chat, leaveRoom, defaultJoin } = require("./socketUtils")
 
 const createSocket = (server) => {
   const io = socketio(server)
@@ -11,6 +11,7 @@ const createSocket = (server) => {
     joinRoom(socket, io)
     chat(socket, io)
     leaveRoom(socket, io)
+    defaultJoin(socket, io)
   })
 }
 
