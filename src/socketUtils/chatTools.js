@@ -9,8 +9,8 @@ const saveMessage = async (messageContent, roomName) => {
       { $addToSet: { messages: newMessage } }
     )
 
-    const savedMessage = await newMessage.save()
-    return savedMessage
+    // const savedMessage = await newMessage.save()
+    return newMessage
   } catch (error) {
     console.log(error)
   }
