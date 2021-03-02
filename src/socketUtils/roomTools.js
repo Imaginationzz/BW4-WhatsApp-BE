@@ -33,7 +33,10 @@ const addMember = async ({ username, socketId, roomName }) => {
 const getMembersList = async (roomName) => {
   try {
     const room = await RoomModel.findOne({ roomName: roomName });
+    // console.log(room)
+    // console.log(roomName)
     return room.membersList;
+
   } catch (error) {
     console.log(error);
   }

@@ -99,7 +99,7 @@ const defaultJoin = (socket, io) => {
         roomName: defaultRoom,
       })
 
-      console.log(username)
+      //console.log(username)
       //SOCKET JOIN TO ROOM
       socket.join(defaultRoom, async () => {
         //ALERT MESSAGE WHEN JOIN THE ROOM
@@ -108,12 +108,14 @@ const defaultJoin = (socket, io) => {
           text: `${username} has joined the room (${defaultRoom})`,
           createdAt: new Date(),
         }
-
+console.log(defaultRoom)
+console.log(username)
         //SEND THE ALERT TO THE ROOM
         socket.broadcast.to(defaultRoom).emit("message", joinAlert)
 
         //MEMBERS LIST
         const membersList = await getMembersList(defaultRoom)
+        console.log(membersList)
 
         //SEND MEMBERS LIST
         io.to(defaultRoom).emit("membersList", {
@@ -121,6 +123,7 @@ const defaultJoin = (socket, io) => {
           list: membersList,
         })
       })
+      console.log(membersList)
     } catch (error) {
       console.log(error)
     }
