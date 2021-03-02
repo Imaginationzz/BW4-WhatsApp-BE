@@ -4,7 +4,7 @@ const mongoose = require("mongoose"),
     findMethod,
     jsonMethod,
     preSave,
-  } = require("../../utilities/auth/modelUtils");
+  } = require("../../utilities/auth/modelUtils")
 
 const UserModel = new Schema(
   {
@@ -17,12 +17,13 @@ const UserModel = new Schema(
     picture: { type: String },
     googleId: { type: String },
     facebookId: { type: String },
+    socketId: { type: String },
   },
   { timestamps: true }
-);
+)
 
-findMethod(UserModel);
-jsonMethod(UserModel);
-preSave(UserModel);
+findMethod(UserModel)
+jsonMethod(UserModel)
+preSave(UserModel)
 
-module.exports = mongoose.model("User", UserModel);
+module.exports = mongoose.model("User", UserModel)

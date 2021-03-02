@@ -16,4 +16,10 @@ const saveMessage = async (messageContent, roomName) => {
   }
 }
 
+// const getMessages = async (roomName) => {
+//   try {
+//   }
+//   catch (error) {console.log(error)}
+// }
+
 module.exports = { saveMessage }
