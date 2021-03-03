@@ -1,20 +1,20 @@
-const MessageModel = require("../services/messages/model")
-const RoomModel = require("../services/rooms/model")
+const MessageModel = require("../services/messages/model");
+const RoomModel = require("../services/rooms/model");
 
-const saveMessage = async (messageContent, roomName) => {
+const saveMessage = async (messageContent, roomId) => {
   try {
-    const newMessage = await new MessageModel(messageContent)
+    const newMessage = await new MessageModel(messageContent);
     const updatedChat = await RoomModel.findOneAndUpdate(
-      { roomName: roomName },
+      { _id: roomId },
       { $addToSet: { messages: newMessage } }
-    )
+    );
 
     // const savedMessage = await newMessage.save()
-    return newMessage
+    return newMessage;
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 // const getMessages = async (roomName) => {
 //   try {
@@ -22,4 +22,4 @@ const saveMessage = async (messageContent, roomName) => {
 //   catch (error) {console.log(error)}
 // }
 
-module.exports = { saveMessage }
+module.exports = { saveMessage };

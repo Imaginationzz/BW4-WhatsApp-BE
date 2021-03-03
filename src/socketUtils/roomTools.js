@@ -2,37 +2,38 @@
 const RoomModel = require("../services/rooms/model");
 
 //ADD USER TO ROOM
-const addMember = async ({ username, socketId, roomName }) => {
+const addMember = async ({ username, socketId, roomId }) => {
   try {
     //FIND MEMBER
     const isMemberJoined = await RoomModel.findOne({
-      roomName,
+      _id: roomId,
       "membersList.username": username,
     });
 
     if (isMemberJoined) {
       //IF ALREADY JOINED ROOM INSERT SOCKET ID
       const user = await RoomModel.findOneAndUpdate(
-        { roomName, "membersList.username": username },
+        { _id: roomId, "membersList.username": username },
         { "membersList.$.socketId": socketId }
       );
     } else {
       //IF NOT JOINED - ADD NEW MEMBER
       const newMember = await RoomModel.findOneAndUpdate(
-        { roomName: roomName },
+        { _id: roomId },
         { $addToSet: { membersList: { username, socketId } } }
       );
     }
-    return { username, roomName };
+    return { username, roomId };
   } catch (error) {
     console.log(error);
   }
 };
 
 //GET MEMBERS LIST IN A ROOM
-const getMembersList = async (roomName) => {
+const getMembersList = async (roomId) => {
   try {
-    const room = await RoomModel.findOne({ roomName: roomName });
+    const room = await RoomModel.findOne({ _id: roomId });
+    // console.log(room);
     return room.membersList;
   } catch (error) {
     console.log(error);
@@ -40,9 +41,9 @@ const getMembersList = async (roomName) => {
 };
 
 //GET MEMBER BY SOCKET ID
-const getMember = async (roomName, socketId) => {
+const getMember = async (roomId, socketId) => {
   try {
-    const room = await RoomModel.findOne({ roomName });
+    const room = await RoomModel.findOne({ _id: roomId });
     const member = room.membersList.find((user) => user.socketId === socketId);
     return member;
   } catch (error) {
@@ -51,12 +52,12 @@ const getMember = async (roomName, socketId) => {
 };
 
 //REMOVE MEMBER FROM DB
-const removeMember = async (roomName, socketId) => {
+const removeMember = async (roomId, socketId) => {
   try {
-    const member = await getMember(roomName, socketId);
+    const member = await getMember(roomId, socketId);
 
     await RoomModel.findOneAndUpdate(
-      { roomName },
+      { _id: roomId },
       { $pull: { membersList: { socketId } } }
     );
 

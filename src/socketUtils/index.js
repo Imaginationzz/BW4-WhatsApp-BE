@@ -13,29 +13,28 @@ const joinRoom = (socket, subscriberSocket, io) => {
   return socket.on("joinRoom", async (data) => {
     try {
       //ADD MEMBER
-      const { username, roomName } = await addMember({
+      const { username, roomId } = await addMember({
         socketId: subscriberSocket,
         ...data,
       });
       // console.log(subscriberSocket);
       //SOCKET JOIN TO ROOM
-      socket.join(roomName, async () => {
+      socket.join(roomId, async () => {
         //ALERT MESSAGE WHEN JOIN THE ROOM
         const joinAlert = {
           sender: "Admin",
-          text: `${username} has joined the room (${roomName})`,
+          text: `${username} has joined the room`,
           createdAt: new Date(),
         };
-
+        // console.log(roomId);
         //SEND THE ALERT TO THE ROOM
-        socket.broadcast.to(roomName).emit("message", joinAlert);
+        socket.broadcast.to(roomId).emit("message", joinAlert);
 
         //MEMBERS LIST
-        const membersList = await getMembersList(roomName);
-        console.log("from socketUtils line 34", membersList);
-
+        const membersList = await getMembersList(roomId);
+        // console.log("memberList", membersList);
         //SEND MEMBERS LIST
-        io.to(roomName).emit("membersList", { roomName, list: membersList });
+        io.to(roomId).emit("membersList", { roomId, list: membersList });
       });
     } catch (error) {
       console.log(error);
@@ -44,9 +43,10 @@ const joinRoom = (socket, subscriberSocket, io) => {
 };
 //CHATGROUP
 const chat = (socket, subscriberSocket, io) => {
-  return socket.on("chat", async ({ roomName, message }) => {
+  return socket.on("chat", async ({ roomId, message }) => {
     //FIND USER
-    const member = await getMember(roomName, subscriberSocket);
+    const member = await getMember(roomId, subscriberSocket);
+    // console.log(member);
     //MESSAGE
     const messageContent = {
       text: message,
@@ -55,34 +55,34 @@ const chat = (socket, subscriberSocket, io) => {
     };
 
     //SAVE MESSAGE IN DB
-    await saveMessage(messageContent, roomName);
+    await saveMessage(messageContent, roomId);
 
     //SEND MeSSAGE TO CHAT
-    io.to(roomName).emit("message", messageContent);
+    io.to(roomId).emit("message", messageContent);
   });
 };
 
 //LEAVE ROOM
 const leaveRoom = (socket, subscriberSocket, io) => {
-  return socket.on("leaveRoom", async ({ roomName }) => {
+  return socket.on("leaveRoom", async ({ roomId }) => {
     try {
-      const member = await removeMember(roomName, subscriberSocket);
+      const member = await removeMember(roomId, subscriberSocket);
 
       //LEAVE ALERT
       const leaveAlert = {
         sender: "Admin",
-        text: `${member.username} has left the room (${roomName})`,
+        text: `${member.username} has left the room (${roomId})`,
         createdAt: new Date(),
       };
 
       //SEND LEAVE ALERT
-      io.to(roomName).emit("message", leaveAlert);
+      io.to(roomId).emit("message", leaveAlert);
 
       //UPDATE MEMBERS LIST
-      const membersList = await getMembersList(roomName);
+      const membersList = await getMembersList(roomId);
 
       //SEND UPDATED MEMBERS LIST
-      io.to(roomName).emit("membersList", { roomName, list: membersList });
+      io.to(roomId).emit("membersList", { roomId, list: membersList });
     } catch (error) {
       console.log(error);
     }
@@ -92,7 +92,8 @@ const leaveRoom = (socket, subscriberSocket, io) => {
 //GET USER ID
 const getUserSocket = async (socket) => {
   const userId = socket.handshake.query.userId;
-  const user = await UserModel.findOne({ _id: userId });
+  const user = await UserModel.findById(userId);
+  console.log(user);
   // console.log("user", user);
   let subscriberSocket;
   if (!user.socketId) {

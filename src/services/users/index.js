@@ -58,36 +58,41 @@ userRoute.route("/profile").get(auth, async (req, res, next) => {
 // })
 
 //EDIT BY USER
-userRoute.route("/profile").put(async (req, res, next) => {
+userRoute.route("/profile").put(auth, async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
-    updates.forEach((update) => (req.user[update] = req.body[update]));
+    updates.forEach((update) => {
+      if (update === "roomsId") {
+        req.user[update] = req.user[update].concat(req.body);
+      } else {
+        req.user[update] = req.body[update];
+      }
+    });
+    // console.log(updates, req.body);
     await req.user.save();
     res.send(req.user);
-    res.send(updates);
+    // res.send(updates);
   } catch (err) {
     next(err);
   }
 });
 
-// //EDIT BY ADMIN
-// userRoute
-//   .route("/admin/:userId")
-//   .put(auth, adminOnly, async (req, res, next) => {
-//     try {
-//       const userId = req.params.userId;
-//       let body = req.body;
-//       const editUser = await UserModel.findByIdAndUpdate(userId, body, {
-//         runValidators: true,
-//         new: true,
-//       });
-//       await editUser.save();
-//       res.send(editUser);
-//     } catch (err) {
-//       console.log(err);
-//       next(err);
-//     }
-//   });
+//EDIT BY ADMIN
+userRoute.route("/:userId").put(async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    let body = req.body;
+    const editUser = await UserModel.findByIdAndUpdate(userId, body, {
+      runValidators: true,
+      new: true,
+    });
+    await editUser.save();
+    res.send(editUser);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
 
 //DELETE BY USER
 userRoute.route("/profile").delete(async (req, res, next) => {
