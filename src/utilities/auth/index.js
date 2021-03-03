@@ -50,7 +50,7 @@ const socialAuthRedirect = async (req, res, next) => {
     // res.redirect(`${process.env.FE_URL_DEV}/home`)
     // console.log(req.user);
     res.redirect(
-      `${process.env.FE_URL_DEV}/?access_token=${req.user.tokens.access_token}`
+      `${process.env.FE_URL_DEV}/main-page?access_token=${req.user.tokens.access_token}`
     );
   } catch (error) {
     next(error);

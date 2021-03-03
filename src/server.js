@@ -31,7 +31,7 @@ const PORT = process.env.PORT || 5000,
   accessOrigin =
     process.env.NODE_ENV === "production"
       ? [process.env.FE_URL_DEV, process.env.FE_URL_PROD]
-      : [process.env.FE_URL_DEV],
+      : [process.env.FE_URL_DEV, "http://localhost:3001"],
   corsOptions = {
     origin: function (origin, callback) {
       if (accessOrigin.indexOf(origin) !== -1 || !origin) {
