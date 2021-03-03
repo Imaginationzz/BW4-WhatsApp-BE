@@ -29,17 +29,17 @@ userRoute.route("/authorize").post(async (req, res, next) => {
 });
 
 //GET
-// userRoute.route("/").get(auth, async (req, res, next) => {
-//   try {
-//     const users = await UserModel.find()
-//     res.send(users)
-//   } catch (err) {
-//     next(err)
-//   }
-// })
+userRoute.route("/").get(auth, async (req, res, next) => {
+  try {
+    const users = await UserModel.find();
+    res.send(users);
+  } catch (err) {
+    next(err);
+  }
+});
 
 //GET BY USER
-userRoute.route("/profile").get(async (req, res, next) => {
+userRoute.route("/profile").get(auth, async (req, res, next) => {
   try {
     res.send(req.user);
   } catch (err) {
