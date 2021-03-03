@@ -6,6 +6,7 @@ const {
   removeMember,
 } = require("./roomTools")
 const { saveMessage } = require("./chatTools")
+const UserModel = require('../services/users/model')
 
 //JOIN ROOM
 const joinRoom = (socket, subscriberSocket, io) => {
@@ -88,5 +89,24 @@ const leaveRoom = (socket, subscriberSocket, io) => {
   })
 }
 
+//UPDATE USER WITH SOCKET ID
+const getUserId = (socket, io)=>{
+    socket.on('getUser', async (userId) =>{
+      const user = await UserModel.findOne({ socketId: socket.id })
+      let subscriberSocket
+  
+      if (!user) {
+        const newUser = await UserModel.findByIdAndUpdate(userId, {
+          socketId: socket.id,
+        })
+        await newUser.save()
+        subscriberSocket = socket.id
+      } else {
+        subscriberSocket = user.sockedId
+      }
+      return subscriberSocket
+    })
+}
+
 //EXPORTS
-module.exports = { joinRoom, chat, leaveRoom }
+module.exports = { joinRoom, chat, leaveRoom, getUserId}
