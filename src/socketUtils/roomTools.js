@@ -1,30 +1,32 @@
 //MAIN IMPORTS
 const RoomModel = require("../services/rooms/model");
 const UserModel = require("../services/users/model");
-
+const mongoose = require("mongoose");
 //ADD USER TO ROOM
 const addMember = async ({ username, socketId, roomId }) => {
   try {
     //FIND MEMBER
     const isMemberJoined = await RoomModel.findOne({
       _id: roomId,
-      "membersList.username": username,
+      membersList: username,
     });
 
+    // console.log(isMemberJoined);
     if (isMemberJoined) {
       //IF ALREADY JOINED ROOM INSERT SOCKET ID
-      const user = await RoomModel.findOneAndUpdate(
-        { _id: roomId, "membersList.username": username },
-        { "membersList.$.socketId": socketId }
+      const user = await UserModel.findOneAndUpdate(
+        { _id: username },
+        { socketId: socketId }
       );
+      // console.log("userSocket", user.socketId, "currentSocket", socketId);
     } else {
       //IF NOT JOINED - ADD NEW MEMBER
-      const newMember = await RoomModel.findOneAndUpdate(
-        { _id: roomId },
-        { $addToSet: { membersList: { username, socketId } } }
+      const newMember = await UserModel.findOneAndUpdate(
+        { _id: username },
+        { socketId: socketId }
       );
     }
-    console.log(roomId);
+    // console.log(roomId);
     return { username, roomId };
   } catch (error) {
     console.log(error);
@@ -34,7 +36,8 @@ const addMember = async ({ username, socketId, roomId }) => {
 //GET MEMBERS LIST IN A ROOM
 const getMembersList = async (roomId) => {
   try {
-    const room = await RoomModel.findOne({ _id: roomId });
+    const room = await RoomModel.findById(roomId).populate("membersList");
+    // console.log("roomTools 38", room);
     // console.log("room from line 37 roomTools.js", room);
     return room.membersList;
   } catch (error) {
@@ -43,12 +46,18 @@ const getMembersList = async (roomId) => {
 };
 
 //GET MEMBER BY SOCKET ID
-const getMember = async (roomId, userId) => {
+const getMember = async (roomId, socketId) => {
   try {
-    const room = await RoomModel.findOne({ _id: roomId });
-    const member = await UserModel.findById(userId);
-    // console.log("roomTools 48", member, room);
-    return member;
+    const room = await RoomModel.findById(roomId).populate("membersList");
+    // console.log(room);
+    const sender = room.membersList.find(
+      (member) => member.socketId === socketId
+    );
+    const receiver = room.membersList.filter(
+      (member) => member.socketId !== socketId
+    );
+    // console.log(sender);
+    return { sender, receiver };
   } catch (error) {
     console.log(error);
   }

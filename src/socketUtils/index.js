@@ -9,17 +9,17 @@ const { saveMessage } = require("./chatTools");
 const UserModel = require("../services/users/model");
 
 //JOIN ROOM
-const joinRoom = (socket, subscriberSocket, io) => {
+const joinRoom = (socket, io) => {
   return socket.on("joinRoom", async (data) => {
     try {
       //ADD MEMBER
       const { username, roomId } = await addMember({
-        socketId: subscriberSocket,
+        socketId: socket.id,
         ...data,
       });
       // console.log("subscribersocket", subscriberSocket);
       //SOCKET JOIN TO ROOM
-      socket.join(roomId, async () => {
+      socket.join((roomId, io), async () => {
         //ALERT MESSAGE WHEN JOIN THE ROOM
         const joinAlert = {
           sender: "Admin",
@@ -29,12 +29,18 @@ const joinRoom = (socket, subscriberSocket, io) => {
         // console.log("roomId", roomId);
         //SEND THE ALERT TO THE ROOM
         // socket.broadcast.to(roomId).emit("message", joinAlert);
-
         //MEMBERS LIST
         const membersList = await getMembersList(roomId);
         // console.log("memberList", membersList);
         //FOR LOOP
-        //io.sockets.connected[member.socketId].join(roomId)
+
+        membersList.forEach((member) => {
+          const socketOfMember = io.sockets.connected[member.socketId];
+          // console.log(socketOfMember);
+          if (socketOfMember) {
+            socketOfMember.join(roomId);
+          }
+        });
         //SEND MEMBERS LIST
         io.to(roomId).emit("membersList", { roomId, list: membersList });
       });
@@ -44,19 +50,20 @@ const joinRoom = (socket, subscriberSocket, io) => {
   });
 };
 //CHATGROUP
-const chat = (socket, subscriberSocket, io) => {
+const chat = (socket, io) => {
   return socket.on("chat", async ({ roomId, message }) => {
-    const userId = socket.handshake.query.userId;
     //FIND USER
-    const member = await getMember(roomId, userId);
-    console.log("member", member);
+    const { sender, receiver } = await getMember(roomId, socket.id);
+    // console.log("member", member);
     //MESSAGE
     const messageContent = {
+      receiver: receiver.map((user) => {
+        return user.username;
+      }),
+      sender: sender.username,
       text: message,
-      sender: member.username,
-      // roomName,
     };
-    console.log("chat", messageContent);
+    // console.log("chat", messageContent);
 
     //SEND MeSSAGE TO CHAT
     io.to(roomId).emit("message", messageContent);
@@ -66,10 +73,10 @@ const chat = (socket, subscriberSocket, io) => {
 };
 
 //LEAVE ROOM
-const leaveRoom = (socket, subscriberSocket, io) => {
+const leaveRoom = (socket, io) => {
   return socket.on("leaveRoom", async ({ roomId }) => {
     try {
-      const member = await removeMember(roomId, subscriberSocket);
+      const member = await removeMember(roomId, socket.id);
 
       //LEAVE ALERT
       const leaveAlert = {
@@ -92,25 +99,5 @@ const leaveRoom = (socket, subscriberSocket, io) => {
   });
 };
 
-//GET USER ID
-const getUserSocket = async (socket) => {
-  const userId = socket.handshake.query.userId;
-  const user = await UserModel.findById(userId);
-  console.log(userId);
-  console.log("user", user);
-  let subscriberSocket;
-  if (!user.socketId) {
-    const newUser = await UserModel.findByIdAndUpdate(userId, {
-      socketId: socket.id,
-    });
-    await newUser.save();
-    subscriberSocket = socket.id;
-  } else {
-    subscriberSocket = user.socketId;
-  }
-  // console.log("subscribeSocket", subscriberSocket);
-  return subscriberSocket;
-};
-
 //EXPORTS
-module.exports = { joinRoom, chat, leaveRoom, getUserSocket };
+module.exports = { joinRoom, chat, leaveRoom };
