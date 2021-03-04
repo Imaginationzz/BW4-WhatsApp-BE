@@ -48,14 +48,14 @@ userRoute.route("/profile").get(auth, async (req, res, next) => {
 });
 
 //GET USER BY ADMIN
-// userRoute.route("/profile/:userId").get(async (req, res, next) => {
-//   try {
-//     const user = await UserModel.findById(req.params.userId)
-//     res.send(user)
-//   } catch (err) {
-//     next(err)
-//   }
-// })
+userRoute.route("/:userId").get(async (req, res, next) => {
+  try {
+    const user = await UserModel.findById(req.params.userId);
+    res.send(user);
+  } catch (err) {
+    next(err);
+  }
+});
 
 //EDIT BY USER
 userRoute.route("/profile").put(auth, async (req, res, next) => {

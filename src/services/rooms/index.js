@@ -19,6 +19,7 @@ roomRoute.route("/").post(async (req, res, next) => {
 roomRoute.route("/").get(async (req, res, next) => {
   try {
     const rooms = await RoomModel.find();
+    // console.log(rooms);
     res.send(rooms);
   } catch (error) {
     console.log(error);
@@ -29,7 +30,7 @@ roomRoute.route("/").get(async (req, res, next) => {
 roomRoute.route("/:roomId").get(async (req, res, next) => {
   try {
     const room = await RoomModel.findById(req.params.roomId).populate(
-      "messages"
+      "membersList"
     );
     res.send(room);
   } catch (error) {
