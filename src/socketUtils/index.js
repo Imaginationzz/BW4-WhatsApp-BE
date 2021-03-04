@@ -17,7 +17,7 @@ const joinRoom = (socket, subscriberSocket, io) => {
         socketId: subscriberSocket,
         ...data,
       });
-      // console.log(subscriberSocket);
+      // console.log("subscribersocket", subscriberSocket);
       //SOCKET JOIN TO ROOM
       socket.join(roomId, async () => {
         //ALERT MESSAGE WHEN JOIN THE ROOM
@@ -26,9 +26,9 @@ const joinRoom = (socket, subscriberSocket, io) => {
           text: `${username} has joined the room`,
           createdAt: new Date(),
         };
-        // console.log(roomId);
+        // console.log("roomId", roomId);
         //SEND THE ALERT TO THE ROOM
-        socket.broadcast.to(roomId).emit("message", joinAlert);
+        // socket.broadcast.to(roomId).emit("message", joinAlert);
 
         //MEMBERS LIST
         const membersList = await getMembersList(roomId);
@@ -44,21 +44,22 @@ const joinRoom = (socket, subscriberSocket, io) => {
 //CHATGROUP
 const chat = (socket, subscriberSocket, io) => {
   return socket.on("chat", async ({ roomId, message }) => {
+    const userId = socket.handshake.query.userId;
     //FIND USER
-    const member = await getMember(roomId, subscriberSocket);
-    // console.log(member);
+    const member = await getMember(roomId, userId);
+    console.log("member", member);
     //MESSAGE
     const messageContent = {
       text: message,
       sender: member.username,
       // roomName,
     };
-
-    //SAVE MESSAGE IN DB
-    await saveMessage(messageContent, roomId);
+    console.log("chat", messageContent);
 
     //SEND MeSSAGE TO CHAT
     io.to(roomId).emit("message", messageContent);
+    //SAVE MESSAGE IN DB
+    await saveMessage(messageContent, roomId);
   });
 };
 
@@ -93,8 +94,8 @@ const leaveRoom = (socket, subscriberSocket, io) => {
 const getUserSocket = async (socket) => {
   const userId = socket.handshake.query.userId;
   const user = await UserModel.findById(userId);
-  console.log(user);
-  // console.log("user", user);
+  console.log(userId);
+  console.log("user", user);
   let subscriberSocket;
   if (!user.socketId) {
     const newUser = await UserModel.findByIdAndUpdate(userId, {

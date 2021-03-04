@@ -1,5 +1,6 @@
 const roomRoute = require("express").Router();
 const RoomModel = require("./model");
+const MessageModel = require("../messages/model");
 
 //METHODS
 //POST
@@ -27,7 +28,9 @@ roomRoute.route("/").get(async (req, res, next) => {
 //GET
 roomRoute.route("/:roomId").get(async (req, res, next) => {
   try {
-    const room = await RoomModel.findById(req.params.roomId);
+    const room = await RoomModel.findById(req.params.roomId).populate(
+      "messages"
+    );
     res.send(room);
   } catch (error) {
     console.log(error);

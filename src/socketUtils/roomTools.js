@@ -1,5 +1,6 @@
 //MAIN IMPORTS
 const RoomModel = require("../services/rooms/model");
+const UserModel = require("../services/users/model");
 
 //ADD USER TO ROOM
 const addMember = async ({ username, socketId, roomId }) => {
@@ -23,6 +24,7 @@ const addMember = async ({ username, socketId, roomId }) => {
         { $addToSet: { membersList: { username, socketId } } }
       );
     }
+    console.log(roomId);
     return { username, roomId };
   } catch (error) {
     console.log(error);
@@ -33,7 +35,7 @@ const addMember = async ({ username, socketId, roomId }) => {
 const getMembersList = async (roomId) => {
   try {
     const room = await RoomModel.findOne({ _id: roomId });
-    // console.log(room);
+    // console.log("room from line 37 roomTools.js", room);
     return room.membersList;
   } catch (error) {
     console.log(error);
@@ -41,10 +43,11 @@ const getMembersList = async (roomId) => {
 };
 
 //GET MEMBER BY SOCKET ID
-const getMember = async (roomId, socketId) => {
+const getMember = async (roomId, userId) => {
   try {
     const room = await RoomModel.findOne({ _id: roomId });
-    const member = room.membersList.find((user) => user.socketId === socketId);
+    const member = await UserModel.findById(userId);
+    // console.log("roomTools 48", member, room);
     return member;
   } catch (error) {
     console.log(error);

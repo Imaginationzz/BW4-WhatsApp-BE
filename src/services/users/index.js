@@ -63,7 +63,11 @@ userRoute.route("/profile").put(auth, async (req, res, next) => {
     const updates = Object.keys(req.body);
     updates.forEach((update) => {
       if (update === "roomsId") {
-        req.user[update] = req.user[update].concat(req.body);
+        if (req.user[update].length > 0) {
+          req.user[update] = req.user[update].concat(req.body[update]);
+        } else {
+          req.user[update] = req.body[update];
+        }
       } else {
         req.user[update] = req.body[update];
       }
