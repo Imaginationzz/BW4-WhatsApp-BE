@@ -33,6 +33,8 @@ const joinRoom = (socket, subscriberSocket, io) => {
         //MEMBERS LIST
         const membersList = await getMembersList(roomId);
         // console.log("memberList", membersList);
+        //FOR LOOP
+        //io.sockets.connected[member.socketId].join(roomId)
         //SEND MEMBERS LIST
         io.to(roomId).emit("membersList", { roomId, list: membersList });
       });
