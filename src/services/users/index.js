@@ -58,7 +58,7 @@ userRoute.route("/profile").get(auth, async (req, res, next) => {
 // })
 
 //EDIT BY USER
-userRoute.route("/profile").put(async (req, res, next) => {
+userRoute.route("/profile").put(auth,async (req, res, next) => {
   try {
     const updates = Object.keys(req.body);
     updates.forEach((update) => (req.user[update] = req.body[update]));
