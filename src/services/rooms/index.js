@@ -18,6 +18,17 @@ roomRoute.route("/").post(async (req, res, next) => {
 //GET
 roomRoute.route("/").get(async (req, res, next) => {
   try {
+    const rooms = await RoomModel.find().populate("membersList");
+    // console.log(rooms);
+    res.send(rooms);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+//NO POPULATE
+roomRoute.route("/onlyId").get(async (req, res, next) => {
+  try {
     const rooms = await RoomModel.find();
     // console.log(rooms);
     res.send(rooms);
