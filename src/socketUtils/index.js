@@ -6,36 +6,56 @@ const {
   removeMember,
 } = require("./roomTools");
 const { saveMessage } = require("./chatTools");
-const UserModel = require("../services/users/model");
+
+const cloudinary = require("../../src/cloudinary");
+
+// const multer = require("multer")
+// const { CloudinaryStorage } = require("multer-storage-cloudinary")
+
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//     folder: "whatsapp",
+//   },
+// })
+
+// const cloudinaryMulter = multer({ storage: storage })
 
 //JOIN ROOM
-const joinRoom = (socket, subscriberSocket, io) => {
+const joinRoom = (socket, io) => {
   return socket.on("joinRoom", async (data) => {
     try {
       //ADD MEMBER
-      const { username, roomName } = await addMember({
-        socketId: subscriberSocket,
+      const { username, roomId } = await addMember({
+        socketId: socket.id,
         ...data,
       });
-      // console.log(subscriberSocket);
+      // console.log("subscribersocket", subscriberSocket);
       //SOCKET JOIN TO ROOM
-      socket.join(roomName, async () => {
+      socket.join((roomId, io), async () => {
         //ALERT MESSAGE WHEN JOIN THE ROOM
         const joinAlert = {
           sender: "Admin",
-          text: `${username} has joined the room (${roomName})`,
+          text: `${username} has joined the room`,
           createdAt: new Date(),
         };
-
+        // console.log("roomId", roomId);
         //SEND THE ALERT TO THE ROOM
-        socket.broadcast.to(roomName).emit("message", joinAlert);
-
+        // socket.broadcast.to(roomId).emit("message", joinAlert);
         //MEMBERS LIST
-        const membersList = await getMembersList(roomName);
-        console.log("from socketUtils line 34", membersList);
+        const membersList = await getMembersList(roomId);
+        // console.log("memberList", membersList);
+        //FOR LOOP
 
+        membersList.forEach((member) => {
+          const socketOfMember = io.sockets.connected[member.socketId];
+          // console.log(socketOfMember);
+          if (socketOfMember) {
+            socketOfMember.join(roomId);
+          }
+        });
         //SEND MEMBERS LIST
-        io.to(roomName).emit("membersList", { roomName, list: membersList });
+        io.to(roomId).emit("membersList", { roomId, list: membersList });
       });
     } catch (error) {
       console.log(error);
@@ -43,70 +63,85 @@ const joinRoom = (socket, subscriberSocket, io) => {
   });
 };
 //CHATGROUP
-const chat = (socket, subscriberSocket, io) => {
-  return socket.on("chat", async ({ roomName, message }) => {
+const chat = (socket, io) => {
+  return socket.on("chat", async ({ roomId, message }) => {
     //FIND USER
-    const member = await getMember(roomName, subscriberSocket);
+    const { sender, receiver } = await getMember(roomId, socket.id);
+    // console.log("member", member);
     //MESSAGE
     const messageContent = {
+      receiver: roomId,
+      sender: sender.username,
       text: message,
-      sender: member.username,
-      // roomName,
+      media: null,
     };
-
-    //SAVE MESSAGE IN DB
-    await saveMessage(messageContent, roomName);
+    // console.log("chat", messageContent);
 
     //SEND MeSSAGE TO CHAT
-    io.to(roomName).emit("message", messageContent);
+    io.to(roomId).emit("message", messageContent);
+    //SAVE MESSAGE IN DB
+    await saveMessage(messageContent, roomId);
+  });
+};
+
+const sendImage = (socket, io) => {
+  return socket.on("image", async ({ roomId, image }) => {
+    const { sender, receiver } = await getMember(roomId, socket.id);
+
+    let imgUrl = "";
+    await cloudinary.uploader.upload(
+      image,
+      { folder: "whatsapp" },
+      function (error, result) {
+        console.log(result.url, error);
+        imgUrl = result.url;
+      }
+    );
+    console.log("url", imgUrl);
+
+    let messageContent = {
+      receiver: receiver.map((user) => {
+        return user.username;
+      }),
+      sender: sender.username,
+      text: null,
+      media: image, //cloudinary link
+    };
+
+    io.to(roomId).emit("message", messageContent); //emit 64 back to fe and sae to cloudinary
+
+    messageContent.media = imgUrl;
+
+    await saveMessage(messageContent, roomId);
   });
 };
 
 //LEAVE ROOM
-const leaveRoom = (socket, subscriberSocket, io) => {
-  return socket.on("leaveRoom", async ({ roomName }) => {
+const leaveRoom = (socket, io) => {
+  return socket.on("leaveRoom", async ({ roomId, userId }) => {
     try {
-      const member = await removeMember(roomName, subscriberSocket);
-
+      const member = await removeMember(roomId, socket.id, userId);
+      console.log(member);
       //LEAVE ALERT
       const leaveAlert = {
         sender: "Admin",
-        text: `${member.username} has left the room (${roomName})`,
+        text: `${member.username} has left the room (${roomId})`,
         createdAt: new Date(),
       };
 
       //SEND LEAVE ALERT
-      io.to(roomName).emit("message", leaveAlert);
+      // io.to(roomId).emit("message", leaveAlert);
 
       //UPDATE MEMBERS LIST
-      const membersList = await getMembersList(roomName);
+      const membersList = await getMembersList(roomId);
 
       //SEND UPDATED MEMBERS LIST
-      io.to(roomName).emit("membersList", { roomName, list: membersList });
+      io.to(roomId).emit("membersList", { roomId, list: membersList });
     } catch (error) {
       console.log(error);
     }
   });
 };
 
-//GET USER ID
-const getUserSocket = async (socket) => {
-  const userId = socket.handshake.query.userId;
-  const user = await UserModel.findOne({ _id: userId });
-  // console.log("user", user);
-  let subscriberSocket;
-  if (!user.socketId) {
-    const newUser = await UserModel.findByIdAndUpdate(userId, {
-      socketId: socket.id,
-    });
-    await newUser.save();
-    subscriberSocket = socket.id;
-  } else {
-    subscriberSocket = user.socketId;
-  }
-  // console.log("subscribeSocket", subscriberSocket);
-  return subscriberSocket;
-};
-
 //EXPORTS
-module.exports = { joinRoom, chat, leaveRoom, getUserSocket };
+module.exports = { joinRoom, chat, leaveRoom, sendImage };

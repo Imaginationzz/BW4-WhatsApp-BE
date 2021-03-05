@@ -3,6 +3,8 @@ const userRoute = require("express").Router(),
   { auth, socialAuthRedirect } = require("../../utilities/auth"),
   { authenticate } = require("../../utilities/auth/tokenTools"),
   passport = require("passport");
+const cloudinary = require("../../utilities/image/cloudinary")
+const upload = require("../../utilities/image/multer")
 
 //ENDPOINTS
 userRoute.route("/").post(async (req, res, next) => {
@@ -48,46 +50,55 @@ userRoute.route("/profile").get(auth, async (req, res, next) => {
 });
 
 //GET USER BY ADMIN
-// userRoute.route("/profile/:userId").get(async (req, res, next) => {
-//   try {
-//     const user = await UserModel.findById(req.params.userId)
-//     res.send(user)
-//   } catch (err) {
-//     next(err)
-//   }
-// })
-
-//EDIT BY USER
-userRoute.route("/profile").put(async (req, res, next) => {
+userRoute.route("/:userId").get(async (req, res, next) => {
   try {
-    const updates = Object.keys(req.body);
-    updates.forEach((update) => (req.user[update] = req.body[update]));
-    await req.user.save();
-    res.send(req.user);
-    res.send(updates);
+    const user = await UserModel.findById(req.params.userId);
+    res.send(user);
   } catch (err) {
     next(err);
   }
 });
 
-// //EDIT BY ADMIN
-// userRoute
-//   .route("/admin/:userId")
-//   .put(auth, adminOnly, async (req, res, next) => {
-//     try {
-//       const userId = req.params.userId;
-//       let body = req.body;
-//       const editUser = await UserModel.findByIdAndUpdate(userId, body, {
-//         runValidators: true,
-//         new: true,
-//       });
-//       await editUser.save();
-//       res.send(editUser);
-//     } catch (err) {
-//       console.log(err);
-//       next(err);
-//     }
-//   });
+//EDIT BY USER
+userRoute.route("/profile").put(auth, async (req, res, next) => {
+  try {
+    const updates = Object.keys(req.body);
+    updates.forEach((update) => {
+      if (update === "roomsId") {
+        if (req.user[update].length > 0) {
+          req.user[update] = req.user[update].concat(req.body[update]);
+        } else {
+          req.user[update] = req.body[update];
+        }
+      } else {
+        req.user[update] = req.body[update];
+      }
+    });
+    // console.log(updates, req.body);
+    await req.user.save();
+    res.send(req.user);
+    // res.send(updates);
+  } catch (err) {
+    next(err);
+  }
+});
+
+//EDIT BY ADMIN
+userRoute.route("/:userId").put(async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    let body = req.body;
+    const editUser = await UserModel.findByIdAndUpdate(userId, body, {
+      runValidators: true,
+      new: true,
+    });
+    await editUser.save();
+    res.send(editUser);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
 
 //DELETE BY USER
 userRoute.route("/profile").delete(async (req, res, next) => {
@@ -186,5 +197,22 @@ userRoute.get(
   passport.authenticate("facebook"),
   socialAuthRedirect
 );
+
+
+
+userRoute.route("/profile/picture").put(upload.single("image"),auth,async(req,res,next)=>{
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path)
+    req.user.picture = result.url
+    await req.user.save()
+    res.json(req.user)
+  } catch (error) {
+    next(error)
+  }
+})
+
+
+
+
 
 module.exports = userRoute;

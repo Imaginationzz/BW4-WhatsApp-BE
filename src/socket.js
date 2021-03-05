@@ -1,20 +1,19 @@
-const socketio = require("socket.io");
-const UserModel = require("./services/users/model");
+const socketio = require("socket.io")
+const UserModel = require("./services/users/model")
 
 // SOCKET UTILITIES
-const { joinRoom, chat, leaveRoom, getUserSocket } = require("./socketUtils");
+const { joinRoom, chat, leaveRoom, sendImage } = require("./socketUtils")
 
 const createSocket = (server) => {
-  const io = socketio(server);
+  const io = socketio(server)
 
   io.on("connection", async (socket) => {
     // console.log(`SocketId => ${socket.id}`);
-    let subscriberSocket = await getUserSocket(socket);
-    // console.log("socketId", subscriberSocket);
-    joinRoom(socket, subscriberSocket, io);
-    chat(socket, subscriberSocket, io);
-    leaveRoom(socket, subscriberSocket, io);
-  });
-};
+    joinRoom(socket, io)
+    chat(socket, io)
+    leaveRoom(socket, io)
+    sendImage(socket, io)
+  })
+}
 
-module.exports = createSocket;
+module.exports = createSocket
