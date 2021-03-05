@@ -64,13 +64,13 @@ const getMember = async (roomId, socketId) => {
 };
 
 //REMOVE MEMBER FROM DB
-const removeMember = async (roomId, socketId) => {
+const removeMember = async (roomId, socketId, userId) => {
   try {
-    const member = await getMember(roomId, socketId);
+    const member = await UserModel.findById(userId);
 
     await RoomModel.findOneAndUpdate(
       { _id: roomId },
-      { $pull: { membersList: { socketId } } }
+      { $pull: { membersList: userId } }
     );
 
     return member;

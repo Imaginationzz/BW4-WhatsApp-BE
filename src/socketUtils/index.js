@@ -57,9 +57,7 @@ const chat = (socket, io) => {
     // console.log("member", member);
     //MESSAGE
     const messageContent = {
-      receiver: receiver.map((user) => {
-        return user.username;
-      }),
+      receiver: roomId,
       sender: sender.username,
       text: message,
     };
@@ -74,10 +72,10 @@ const chat = (socket, io) => {
 
 //LEAVE ROOM
 const leaveRoom = (socket, io) => {
-  return socket.on("leaveRoom", async ({ roomId }) => {
+  return socket.on("leaveRoom", async ({ roomId, userId }) => {
     try {
-      const member = await removeMember(roomId, socket.id);
-
+      const member = await removeMember(roomId, socket.id, userId);
+      console.log(member);
       //LEAVE ALERT
       const leaveAlert = {
         sender: "Admin",
@@ -86,7 +84,7 @@ const leaveRoom = (socket, io) => {
       };
 
       //SEND LEAVE ALERT
-      io.to(roomId).emit("message", leaveAlert);
+      // io.to(roomId).emit("message", leaveAlert);
 
       //UPDATE MEMBERS LIST
       const membersList = await getMembersList(roomId);
