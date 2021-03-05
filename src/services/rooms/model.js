@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model } = require("mongoose")
 
 const RoomModel = new Schema(
   {
@@ -10,10 +10,11 @@ const RoomModel = new Schema(
         receiver: [{ type: String }],
         sender: { type: String },
         text: { type: String },
+        media: { type: String },
       },
     ],
   },
   { timestamps: true }
-);
+)
 
-module.exports = model("ChatRoom", RoomModel);
+module.exports = model("ChatRoom", RoomModel)
