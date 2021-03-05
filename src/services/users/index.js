@@ -3,6 +3,8 @@ const userRoute = require("express").Router(),
   { auth, socialAuthRedirect } = require("../../utilities/auth"),
   { authenticate } = require("../../utilities/auth/tokenTools"),
   passport = require("passport");
+const cloudinary = require("../../utilities/image/cloudinary")
+const upload = require("../../utilities/image/multer")
 
 //ENDPOINTS
 userRoute.route("/").post(async (req, res, next) => {
@@ -195,5 +197,22 @@ userRoute.get(
   passport.authenticate("facebook"),
   socialAuthRedirect
 );
+
+
+
+userRoute.route("/profile/picture").put(upload.single("image"),auth,async(req,res,next)=>{
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path)
+    req.user.picture = result.url
+    await req.user.save()
+    res.json(req.user)
+  } catch (error) {
+    next(error)
+  }
+})
+
+
+
+
 
 module.exports = userRoute;
