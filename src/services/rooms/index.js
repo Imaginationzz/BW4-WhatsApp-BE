@@ -49,6 +49,16 @@ roomRoute.route("/:roomId").get(async (req, res, next) => {
     next(error);
   }
 });
+//NO POPULATE
+roomRoute.route("/onlyId/:roomId").get(async (req, res, next) => {
+  try {
+    const room = await RoomModel.findById(req.params.roomId);
+    res.send(room);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
 
 //DELETE ROOM_MODEL
 
